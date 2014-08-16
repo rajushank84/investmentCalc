@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<head>
+	<style>
+		body {
+			font-family: Arial;
+			font-size: 12px;
+		}
+
+		.field {
+			width: 100%;
+			height: 20px;
+			margin: 0 0 10px;
+			clear: both;
+		}
+
+		label {
+			width: 50%;
+			display: block;
+			float: left;
+		}
+
+		input {
+			float: right;
+		}
+
+		#inputs {
+			float: left;
+			width: 45%;
+		}
+
+		#results {
+			float: right;
+			width: 50%;
+			font-size: .9em;
+		}
+
+		.US {
+			border-bottom: 1px solid #ccc;
+		}
+
+		.US, .india {
+			margin: 10px;
+			clear: both;
+			width: 100%;
+		}
+
+		.emphasize {
+			font-size: 1.5em;
+			color: red;
+		}
+	</style>
+</head>
+<body>
+	<h1>Calculate how much you will save, on a stint in the US and then working for the rest of your life in India</h1>
+	<div id="inputs">
+		<div class="US">
+			<h2>First, how much will you invest upfront in an NRI FD in the US?</h2>
+			<div class="field">
+				<label for="initialUS">Initial investment in US (in USD - your savings so far):</label>
+				<input type="text" value="30000" id="initialUS" />
+			</div>
+			<div class="field">
+				<label for="yearsUS">Years in US:</label>
+				<input type="text" value="4" id="yearsUS" />
+			</div>
+			<div class="field">
+				<label for="rateUS">Interest rate in US FD (or NRI FD):</label>
+				<input type="text" value="6" id="rateUS" />
+			</div>
+			<div class="field">
+				<label for="monthlyUS">Monthly addition to FD in US (in USD - monthly savings):</label>
+				<input type="text" value="1200" id="monthlyUS" />
+			</div>
+		</div>
+
+		<div class="india">
+			<h2>Moving back to India</h2>
+			<div class="field">
+				<label for="moving">Moving expenses (in rupees):</label>
+				<input type="text" value="600000" id="moving" />
+			</div>
+			<div class="field">
+				<label for="rateIndia">Interest rate in India FD:</label>
+				<input type="text" value="6" id="rateIndia" />
+			</div>
+			<div class="field">
+				<label for="yearsIndia">Years in India:</label>
+				<input type="text" value="15" id="yearsIndia" />
+			</div>
+			<div class="field">
+				<label for="monthlyIndia">Monthly contribution in India (in rupees - monthly savings):</label>
+				<input type="text" value="12000" id="monthlyIndia" />
+			</div>
+			<div class="field">
+				<input type="button" value="Calculate" id="calculate" />
+			</div>
+		</div>
+	</div>
+	<div id="results"></div>
+	<script>
+		var lib = {
+			usd: function (amount) {
+				return (amount).toLocaleString("en-US", {style: "currency", currency: "USD", minimumFractionDigits: 2})	
+			},
+
+			inr: function (amount) {
+				return (amount * 60).toLocaleString("en-IN", {style: "currency", currency: "INR", minimumFractionDigits: 2})	
+			},
+
+			usdinr: function(amount) {
+				return this.usd(amount) + " or " + this.inr(amount);
+			},
+
+			log: function (text) {
+				var text = text || "";
+				document.getElementById("results").innerHTML = document.getElementById("results").innerHTML + text + "<br/>";
+			},
+
+			clear: function() {
+				document.getElementById("results").innerHTML = "";
+			}
+		}
+
+		function getVal (id) {
+			return (document.getElementById(id).value * 1);
+		}
+
+		function getResults() {
+			var initial = getVal("initialUS"),
+				total = initial,
+				rate = getVal("rateUS"),
+				years = getVal("yearsUS"),
+				monthly = getVal("monthlyUS"),
+				i;
+
+			lib.clear();
+
+			lib.log("By investing " + lib.usd(initial) + " initially and " + lib.usd(monthly) + " for " + years + " years at " + rate + "% ...");
+
+			calculate(initial, total, rate, years, monthly);
+
+			lib.log("Going back to India:");
+
+			years = getVal("yearsIndia");
+			monthly = getVal("monthlyIndia") / 60;
+			moving = getVal("moving") / 60;
+			total = total - moving;
+			initial = total;
+
+			lib.log("Moving expenses: " + lib.usdinr(moving));
+			lib.log();
+			lib.log("If you invest the remaining " + lib.usdinr(total) + " at " + rate + "% for " + years + " years, adding an additional " + lib.inr(monthly) + " every month, then at the end of " + years + " years you will have:");
+
+			calculate(initial, total, rate, years, monthly);
+
+			function calculate () {
+				var ifSaved;
+
+				lib.log();
+				ifSaved = initial + (monthly * 12 * years);
+				for (i = 0; i < years; i++) {
+					total = total + (rate / 100 * total);
+					total = total + monthly * 12;
+					lib.log("At the end of year " + (i + 1) + ": " + lib.usdinr(total));
+				}
+				lib.log();
+				lib.log("After " + years + " years, you will have saved <span class='emphasize'>" + lib.usdinr(total) + "</span>");
+				lib.log("(If you just save that instead of investing, you would have saved just " + lib.usdinr(ifSaved) + ")");
+				lib.log();			
+			}
+		}
+
+		document.getElementById("calculate").addEventListener("click", getResults);
+
+		Array.prototype.forEach.call(document.getElementsByTagName("input"), function (input) {
+			input.addEventListener("change", getResults);
+		});
+
+		window.onload = getResults;
+	</script>	
+</body>
+</html>
